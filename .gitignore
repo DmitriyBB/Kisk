@@ -1,0 +1,13 @@
+# база, видео, музыка, ключи, cookies — всё это создаётся при запуске
+data/
+
+# yt-dlp ставится сам при npm install (на Render — версия для Linux)
+bin/
+
+# зависимости
+node_modules/
+
+# мусор macOS и логи
+.DS_Store
+*.log
+.env

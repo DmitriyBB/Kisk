@@ -1,4 +1,4 @@
-// Ложа: запуск, каркас (боковая панель / нижняя навигация), маршруты и переходы между страницами.
+// Kisk: запуск, каркас (боковая панель / нижняя навигация), маршруты и переходы между страницами.
 import { h, $, sleep, reduced } from './util.js';
 import { icon, logo } from './icons.js';
 import { store, bus, rt, loadMe, loadMedia } from './api.js';
@@ -12,6 +12,7 @@ import { roomPage, watchPage } from './pages/watch.js';
 import { musicPage } from './pages/music.js';
 import { friendsPage } from './pages/friends.js';
 import { settingsPage } from './pages/settings.js';
+import './preferences.js';
 
 const app = $('#app'), view = $('#view'), side = $('#side'), tabbar = $('#tabbar');
 
@@ -94,7 +95,7 @@ async function render() {
   }
   if (!route) return nav.go('/', { replace: true });
   if (!store.me && !route.pub) {
-    try { sessionStorage.setItem('lozha.next', path); } catch {}
+    try { sessionStorage.setItem('kisk.next', path); } catch {}
     return nav.go('/login', { replace: true });
   }
   if (store.me && route.name === 'login') return nav.go('/', { replace: true });
@@ -169,7 +170,7 @@ bus.on('auth', async () => {
   await loadMe();
   await startSession();
   let next = '/';
-  try { next = sessionStorage.getItem('lozha.next') || '/'; sessionStorage.removeItem('lozha.next'); } catch {}
+  try { next = sessionStorage.getItem('kisk.next') || sessionStorage.getItem('lozha.next') || '/'; sessionStorage.removeItem('kisk.next'); sessionStorage.removeItem('lozha.next'); } catch {}
   nav.go(/^\/(login|invite)/.test(next) ? '/' : next, { replace: true });
 });
 bus.on('unauthorized', endSession);
@@ -196,7 +197,7 @@ bus.on('rt', (open) => {
 });
 
 // Для отладки и автопроверок из консоли браузера.
-window.__lozha = { store, rt, music, nav, bus };
+window.__kisk = { store, rt, music, nav, bus };
 
 (async function boot() {
   try { await loadMe(); } catch { toast('Сервер не отвечает. Попробуй обновить страницу.'); }

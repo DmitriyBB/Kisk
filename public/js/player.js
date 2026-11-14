@@ -175,7 +175,11 @@ export class Player {
     this.on(v, 'ended', () => { this.sync(); if (!this.room) this.poke(); });
     this.on(v, 'error', () => this.onError());
     this.on(v, 'webkitbeginfullscreen', () => { this.nativeFs = true; this.showNativeSubs(true); });
-    this.on(v, 'webkitendfullscreen', () => { this.nativeFs = false; this.showNativeSubs(false); });
+    this.on(v, 'webkitendfullscreen', () => {
+      this.nativeFs = false;
+      this.showNativeSubs(false);
+      this.later(() => { this.positionMenu(); this.paintTime(); this.paintBuffer(); this.setIdle(false); }, 80);
+    });
     this.on(v, 'enterpictureinpicture', () => this.pipBtn.classList.add('on'));
     this.on(v, 'leavepictureinpicture', () => this.pipBtn.classList.remove('on'));
     const fsChange = () => {
@@ -187,6 +191,17 @@ export class Player {
     };
     this.on(document, 'fullscreenchange', fsChange);
     this.on(document, 'webkitfullscreenchange', fsChange);
+    const viewportChange = () => this.later(() => {
+      if (this.destroyed) return;
+      this.positionMenu();
+      this.paintTime();
+      this.paintBuffer();
+      this.applyZoom();
+      this.setIdle(false);
+    }, 80);
+    this.on(window, 'resize', viewportChange);
+    this.on(window, 'orientationchange', viewportChange);
+    if (window.visualViewport) this.on(window.visualViewport, 'resize', viewportChange);
 
     // Указатель: мышь — клик/двойной клик, палец — тап/двойной тап ±10 с.
     this.on(this.el, 'pointermove', (e) => { if (e.pointerType !== 'touch') this.poke(); });
@@ -299,7 +314,7 @@ export class Player {
     if (!('mediaSession' in navigator) || !window.MediaMetadata || !this.media) return;
     try {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: this.media.title, artist: 'Ложа',
+        title: this.media.title, artist: 'Kisk',
         artwork: this.media.poster ? [{ src: this.media.poster, sizes: '960x540', type: 'image/jpeg' }] : [],
       });
     } catch {}
@@ -769,9 +784,11 @@ export class Player {
     }
     if (el.classList.contains('pseudo-fs')) { el.classList.remove('pseudo-fs'); this.fsBtn.replaceChildren(icon('fs')); return; }
     const pseudo = () => { el.classList.add('pseudo-fs'); this.fsBtn.replaceChildren(icon('fsExit')); };
+    // iOS native fullscreen detaches the video surface from the room during rotation. Keep it inline instead.
+    if (isIOS) { pseudo(); return; }
     if (el.requestFullscreen) el.requestFullscreen().catch(() => (v.webkitEnterFullscreen ? v.webkitEnterFullscreen() : pseudo()));
     else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-    else if (v.webkitEnterFullscreen) { // запасной вариант для iPhone: системный плеер
+    else if (v.webkitEnterFullscreen) { // запасной вариант для браузеров с системным видеоплеером
       try { v.webkitEnterFullscreen(); } catch { pseudo(); }
     } else pseudo();
   }
@@ -788,7 +805,28 @@ export class Player {
   toggleMenu(force) {
     this.menuOpen = force ?? !this.menuOpen;
     this.el.classList.toggle('menu-open', this.menuOpen);
-    if (this.menuOpen) { this.menuPage = null; this.drawMenu(); this.setIdle(false); } else this.poke();
+    if (this.menuOpen) { this.menuPage = null; this.drawMenu(); this.positionMenu(); this.setIdle(false); }
+    else { this.positionMenu(); this.poke(); }
+  }
+  positionMenu() {
+    const compactPortrait = matchMedia('(max-width: 860px) and (orientation: portrait)').matches;
+    if (!this.menuOpen || !compactPortrait) {
+      for (const p of ['position', 'left', 'right', 'top', 'bottom', 'max-height']) this.menu.style.removeProperty(p);
+      for (const page of [this.menuMain, this.menuSub]) page.style.removeProperty('max-height');
+      return;
+    }
+    const r = this.gearBtn.getBoundingClientRect();
+    const gap = 8;
+    const top = Math.max(8, Math.min(r.bottom + gap, innerHeight - 140));
+    const right = Math.max(8, innerWidth - r.right);
+    const maxHeight = Math.max(120, Math.min(420, innerHeight - top - 12));
+    this.menu.style.position = 'fixed';
+    this.menu.style.left = 'auto';
+    this.menu.style.right = `${right}px`;
+    this.menu.style.top = `${top}px`;
+    this.menu.style.bottom = 'auto';
+    this.menu.style.maxHeight = `${maxHeight}px`;
+    for (const page of [this.menuMain, this.menuSub]) page.style.maxHeight = `${Math.max(96, maxHeight - 12)}px`;
   }
   drawMenu() {
     if (!this.menuOpen) return;
@@ -833,6 +871,7 @@ export class Player {
     }
     this.menuSub.replaceChildren(...sub);
     this.menuPages.style.transform = this.menuPage ? 'translateX(-100%)' : '';
+    this.positionMenu();
   }
   openPage(p) {
     this.menuPage = p;

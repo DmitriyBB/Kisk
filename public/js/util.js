@@ -86,10 +86,14 @@ export const initials = (name) => {
 
 export const ls = {
   get(k, d = null) {
-    try { const v = localStorage.getItem(`lozha.${k}`); return v == null ? d : JSON.parse(v); } catch { return d; }
+    try {
+      let v = localStorage.getItem(`kisk.${k}`);
+      if (v == null) { v = localStorage.getItem(`lozha.${k}`); if (v != null) localStorage.setItem(`kisk.${k}`, v); }
+      return v == null ? d : JSON.parse(v);
+    } catch { return d; }
   },
-  set(k, v) { try { localStorage.setItem(`lozha.${k}`, JSON.stringify(v)); } catch {} },
-  del(k) { try { localStorage.removeItem(`lozha.${k}`); } catch {} },
+  set(k, v) { try { localStorage.setItem(`kisk.${k}`, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(`kisk.${k}`); localStorage.removeItem(`lozha.${k}`); } catch {} },
 };
 
 export function debounce(fn, ms) {

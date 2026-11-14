@@ -1,7 +1,7 @@
 // Очереди: загрузки по ссылке (не больше трёх сразу), приём файлов, фоновые версии качества.
 import fs from 'node:fs';
 import path from 'node:path';
-import { sql } from './db.js';
+import { sql, getSetting } from './db.js';
 import { DIRS, MAX_DOWNLOADS } from './config.js';
 import {
   getMedia, patchMedia, setLive, removeMedia, mediaDir, variantsOf, getVariant, patchVariant, setVariantProgress, touch,
@@ -100,8 +100,14 @@ async function runIngest(id) {
 export function planVariants(id, src) {
   const m = getMedia(id);
   if (!m || m.kind !== 'video' || !src?.video) return;
-  // H.264-исходник играют все: нужны только версии ниже. Для VP9/HEVC/AV1 нужна и совместимая того же размера.
-  const targets = LADDER.filter((t) => (src.video.codec === 'h264' ? t < src.q * 0.93 : t <= src.q * 1.03));
+  let job = {};
+  try { job = JSON.parse(m.job || '{}'); } catch {}
+  const configured = Array.isArray(job.variantHeights) ? job.variantHeights : getSetting('variantHeights', LADDER);
+  const wanted = new Set(configured.map(Number).filter((q) => LADDER.includes(q)));
+  // Совместимая H.264-версия исходного размера остаётся для VP9/HEVC/AV1; остальные версии — только по выбору.
+  const targets = LADDER.filter((t) => src.video.codec === 'h264'
+    ? wanted.has(t) && t < src.q * 0.93
+    : t <= src.q * 1.03 && (t >= src.q * 0.93 || wanted.has(t)));
   if (!targets.length) return;
   const info = m.origin === 'link' ? readInfo(id) : null;
   const site = info ? siteVariantPlan(info, src, targets) : new Map();

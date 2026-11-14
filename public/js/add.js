@@ -70,6 +70,7 @@ export function openAddSheet(kind = 'video') {
       return;
     }
     let chosen = null;
+    let variantChecks = null;
     const dl = h('button.btn.btn-primary.btn-l.btn-block', { type: 'button' }, h('span'));
     const label = dl.firstChild;
     const parts = [h('div.preview',
@@ -88,7 +89,20 @@ export function openAddSheet(kind = 'video') {
       const qs = r.qualities;
       chosen = qs.find((q) => q.q && q.q <= 1080) || qs[0]; // по умолчанию — лучшее до 1080p
       const grid = h('div.quals');
-      const setLabel = () => { label.textContent = `Скачать ${chosen.label}${chosen.size ? ` · ${chosen.approx ? '≈ ' : ''}${fmtBytes(chosen.size)}` : ''}`; };
+      const targets = [360, 480, 720, 1080, 1440];
+      const checks = variantChecks = new Map(targets.map((q) => [q, h('input', { type: 'checkbox', checked: store.variantHeights.includes(q) })]));
+      const extras = h('div.col', { style: { gap: '8px' } },
+        h('div.eyebrow', 'Дополнительные версии для этого видео'),
+        h('div.row.wrap', targets.map((q) => h('label.row.small', { style: { gap: '6px', cursor: 'pointer' } }, checks.get(q), h('span', `${q}p`)))),
+        h('div.hint', 'Исходник сохраняется всегда. Сними все отметки, если нужны только выбранное качество и исходник.'));
+      const setLabel = () => {
+        label.textContent = `Скачать ${chosen.label}${chosen.size ? ` · ${chosen.approx ? '≈ ' : ''}${fmtBytes(chosen.size)}` : ''}`;
+        for (const [q, input] of checks) {
+          const available = !!chosen.height && q < chosen.q;
+          input.closest('label').hidden = !available;
+        }
+        extras.hidden = !chosen.height || !targets.some((q) => q < chosen.q);
+      };
       const btns = qs.map((q) => h('button', { type: 'button', onclick: () => { chosen = q; mark(); } },
         h('b', q.label), h('span', q.size ? `${q.approx ? '≈ ' : ''}${fmtBytes(q.size)}` : (q.codec || '—'))));
       grid.append(...btns);
@@ -96,12 +110,14 @@ export function openAddSheet(kind = 'video') {
       const mark = () => { btns.forEach((b, i) => b.classList.toggle('on', qs[i] === chosen)); p.update(); setLabel(); };
       mark();
       if (qs.length > 1) parts.push(h('div.eyebrow', 'Качество'), grid);
+      if (targets.some((q) => q < chosen.q)) parts.push(extras);
       else setLabel();
     }
     dl.onclick = async () => {
       busy(dl, true);
       try {
-        await post('/api/links/download', { id: r.id, height: chosen?.height, kind });
+        const variantHeights = isAudio ? undefined : [...variantChecks].filter(([q, input]) => input.checked && q < chosen.q).map(([q]) => q);
+        await post('/api/links/download', { id: r.id, height: chosen?.height, kind, variantHeights });
         s.close();
         toast(isAudio ? 'Трек добавлен в загрузку' : 'Загрузка началась — карточка уже в библиотеке');
       } catch (e) {

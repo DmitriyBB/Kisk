@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="public/icon.svg" width="84" alt="Ложа">
+<img src="public/icon.svg" width="84" alt="Kisk">
 
-# Ложа
+# Kisk
 
 **Свой маленький кинозал: фильмы и музыка вместе с друзьями — на своём сервере.**
 
@@ -34,6 +34,7 @@
 - **Загрузка по ссылке** — YouTube (обычные видео, Shorts, ссылки из плейлистов), Rutube, VK Видео и всё, что умеет [yt-dlp], плюс страницы со встроенным плеером, `.m3u8` и прямые ссылки на файлы. Перед скачиванием видно превью, длительность и все качества с размерами.
 - **Без потери качества** — что браузеры играют, остаётся как есть; остальное ffmpeg приводит к H.264/AAC. Субтитры, постер и русская дорожка — автоматически.
 - **Версии качества** — 360p, 480p, 720p, 1080p, 2K, 60 кадров остаются 60. Для видео по ссылке готовые H.264-версии берутся прямо с сайта, пересжимается только недостающее.
+- **Нужные версии выбираешь сам** — владелец задаёт набор по умолчанию в настройках, а при скачивании ссылки может изменить его для этого видео.
 
 ### 🍿 Вместе
 - **Комнаты** — пауза, перемотка и скорость синхронны у всех; если у кого-то подгружается, комната ждёт.
@@ -56,7 +57,7 @@
 - Видео и музыка отдаются только после проверки доступа.
 
 ### 🖤 Интерфейс
-Чёрно-белый, тёмная и светлая темы, стекло, плавные переходы, свои иконки. Одинаково удобно на телефоне и на большом мониторе.
+Чёрно-белый, тёмная и светлая темы, стекло и плавные переходы. Эффекты и оптимизированную синхронизацию телефона можно включать и отключать в настройках.
 
 ## Скриншоты
 
@@ -84,8 +85,8 @@
 Нужны **Node.js 22+** и **ffmpeg** (`brew install ffmpeg`, `sudo apt install ffmpeg` или `winget install Gyan.FFmpeg`). yt-dlp ставить не нужно — `npm install` сам положит официальный в `./bin`, если его нет в системе.
 
 ```bash
-git clone <ссылка на этот репозиторий> lozha
-cd lozha
+git clone <ссылка на этот репозиторий> kisk
+cd kisk
 npm install
 npm start
 ```
@@ -97,7 +98,7 @@ npm start
 | `Пользователь` | `12345678` |
 
 > [!IMPORTANT]
-> Смени пароль сразу после первого входа: «Настройки» → «Профиль». Логин и пароль первого запуска можно задать заранее через `LOZHA_OWNER` и `LOZHA_OWNER_PASSWORD`.
+> Смени пароль сразу после первого входа: «Настройки» → «Профиль». Логин и пароль первого запуска можно задать заранее через `KISK_OWNER` и `KISK_OWNER_PASSWORD`.
 
 Друзей зови через «Друзья» → «Пригласить»: ссылка одноразовая. В консоли при старте есть и адрес в локальной сети — для телефона.
 
@@ -136,12 +137,14 @@ npm run https
 | `PORT` | `3000` | порт сайта |
 | `HTTPS_PORT` | `3443` | порт HTTPS-режима |
 | `HOST` | `0.0.0.0` | на каком адресе слушать (`127.0.0.1` — только этот компьютер) |
-| `LOZHA_DATA` | `./data` | база, фильмы, музыка, временные файлы |
-| `LOZHA_BIN` | `./bin` | где лежит yt-dlp |
-| `LOZHA_OWNER` | `Пользователь` | логин владельца при первом запуске |
-| `LOZHA_OWNER_PASSWORD` | `12345678` | пароль владельца при первом запуске |
-| `LOZHA_TRUST_PROXY` | — | `1`, если сайт стоит за nginx |
-| `LOZHA_ACCEL` | — | отдача файлов через nginx, например `/_media/` |
+| `KISK_DATA` | `./data` | база, фильмы, музыка, временные файлы |
+| `KISK_BIN` | `./bin` | где лежит yt-dlp |
+| `KISK_OWNER` | `Пользователь` | логин владельца при первом запуске |
+| `KISK_OWNER_PASSWORD` | `12345678` | пароль владельца при первом запуске |
+| `KISK_TRUST_PROXY` | — | `1`, если сайт стоит за nginx |
+| `KISK_ACCEL` | — | отдача файлов через nginx, например `/_media/` |
+
+Настройки эффектов интерфейса и режима синхронизации хранятся отдельно в каждом браузере.
 
 ## Свой сервер
 
@@ -149,11 +152,11 @@ npm run https
 
 ```bash
 # на сервере, один раз
-sudo useradd --system --home /var/lib/lozha --shell /usr/sbin/nologin lozha
-sudo mkdir -p /var/www/lozha /var/lib/lozha && sudo chown lozha:lozha /var/lib/lozha
-sudo cp deploy/lozha.service /etc/systemd/system/ && sudo systemctl enable lozha
-sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/lozha   # поменяй example.com на свой домен
-sudo ln -s /etc/nginx/sites-available/lozha /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx
+sudo useradd --system --home /var/lib/kisk --shell /usr/sbin/nologin kisk
+sudo mkdir -p /var/www/kisk /var/lib/kisk && sudo chown kisk:kisk /var/lib/kisk
+sudo cp deploy/kisk.service /etc/systemd/system/ && sudo systemctl enable kisk
+sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/kisk   # поменяй example.com на свой домен
+sudo ln -s /etc/nginx/sites-available/kisk /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx
 
 # с компьютера — каждый раз, когда обновляешь код
 DEPLOY_HOST=user@your-server ./deploy/deploy.sh
@@ -162,8 +165,8 @@ DEPLOY_HOST=user@your-server ./deploy/deploy.sh
 После первой выкатки поставь yt-dlp к данным сервиса и запусти его:
 
 ```bash
-cd /var/www/lozha && sudo -u lozha env LOZHA_BIN=/var/lib/lozha/bin node scripts/setup.mjs
-sudo systemctl start lozha
+cd /var/www/kisk && sudo -u kisk env KISK_BIN=/var/lib/kisk/bin node scripts/setup.mjs
+sudo systemctl start kisk
 ```
 
 ## Как устроено

@@ -4,12 +4,13 @@ import { emitter } from './util.js';
 export const bus = emitter();
 
 export const store = {
-  app: 'Ложа',
+  app: 'Kisk',
   me: null,
   can: { films: false, music: false },
   ytdlp: true,
   secure: false,
   warnPass: false, // у владельца всё ещё пароль по умолчанию
+  variantHeights: [360, 480, 720, 1080, 1440],
   media: new Map(),
   mediaLoaded: false,
   rooms: [],
@@ -51,6 +52,7 @@ export async function loadMe() {
   store.ytdlp = me.ytdlp;
   store.secure = me.secure;
   store.warnPass = !!me.warnPass;
+  store.variantHeights = Array.isArray(me.variantHeights) ? me.variantHeights : [360, 480, 720, 1080, 1440];
   if (me.now) rt.offset = me.now - Date.now();
   return me;
 }

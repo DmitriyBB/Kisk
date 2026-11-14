@@ -1,9 +1,9 @@
 {
-  "name": "lozha",
+  "name": "kisk",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Ложа — свой маленький кинозал: фильмы и музыка вместе с друзьями",
+  "description": "Kisk — свой маленький кинозал: фильмы и музыка вместе с друзьями",
   "engines": {
     "node": ">=22.5"
   },

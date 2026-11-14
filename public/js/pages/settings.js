@@ -3,6 +3,7 @@ import { h, fmtBytes } from '../util.js';
 import { icon } from '../icons.js';
 import { store, bus, get, post, put, del, loadMe } from '../api.js';
 import { seg, toast, confirmDialog, avatar, busy, alertBox } from '../ui.js';
+import { getPreference, setPreference } from '../preferences.js';
 
 async function shrinkAvatar(file) {
   const url = URL.createObjectURL(file);
@@ -77,6 +78,11 @@ export function settingsPage(root) {
   const themeSeg = seg([{ value: 'auto', label: 'Авто', icon: 'auto' }, { value: 'dark', label: 'Тёмная', icon: 'moon' }, { value: 'light', label: 'Светлая', icon: 'sun' }],
     window.__theme.get(), (v) => { window.__theme.set(v); bus.emit('theme'); });
   const offTheme = bus.on('theme', () => themeSeg.set(window.__theme.get()));
+  const preferenceSwitch = (key, label, description) => {
+    const sw = h('button.switch', { type: 'button', role: 'switch', 'aria-checked': String(getPreference(key)), 'aria-label': label });
+    sw.onclick = () => { const next = !getPreference(key); setPreference(key, next); sw.setAttribute('aria-checked', String(next)); };
+    return h('div.col', { style: { gap: '6px' } }, h('div.kv', h('span', label), sw), h('div.hint', description));
+  };
 
   const logout = async (all) => {
     if (all && !(await confirmDialog({ title: 'Выйти на всех устройствах?', text: 'Все сеансы завершатся, включая этот. Входить придётся заново.', ok: 'Выйти везде' }))) return;
@@ -94,6 +100,10 @@ export function settingsPage(root) {
         pick,
         h('label.field', h('span', 'Имя, которое видят в чате и в комнатах'), nameForm))),
     h('div.group', h('div.eyebrow', 'Оформление'), h('div.card', h('div.kv', h('span', 'Тема · «Авто» — как в системе'), themeSeg))),
+    h('div.group', h('div.eyebrow', 'Эффекты и синхронизация'), h('div.card',
+      preferenceSwitch('glass', 'Эффект стекла', 'Отключи размытие фона, если интерфейс работает медленно.'),
+      preferenceSwitch('smoothTransitions', 'Плавные переходы', 'Отключи анимации и переходы интерфейса.'),
+      preferenceSwitch('optimizedSync', 'Оптимизированная синхронизация', 'Мягче корректирует воспроизведение на телефонах. При отключении используется обычная коррекция скорости.'))),
     h('div.group', h('div.eyebrow', 'Пароль'), h('div.card', warn, pwForm)),
   );
 
@@ -121,6 +131,14 @@ export function settingsPage(root) {
         sw.setAttribute('aria-checked', String(on));
         try { await post('/api/system/settings', { friendsMusic: on }); } catch (e) { toast(e.message); sw.setAttribute('aria-checked', String(!on)); }
       };
+      const variantHeights = [360, 480, 720, 1080, 1440];
+      const variants = new Map(variantHeights.map((q) => [q, h('input', { type: 'checkbox', checked: s.settings.variantHeights.includes(q) })]));
+      for (const [q, input] of variants) input.addEventListener('change', async () => {
+        const before = [...s.settings.variantHeights];
+        const next = input.checked ? [...new Set([...before, q])] : before.filter((x) => x !== q);
+        try { s = await post('/api/system/settings', { variantHeights: next }); }
+        catch (e) { input.checked = !input.checked; toast(e.message); }
+      });
       box.replaceChildren(
         h('div.card',
           h('div.kv', h('span', 'Диск'), h('b.num', `занято ${fmtBytes(s.disk.used)} · свободно ${fmtBytes(s.disk.free)}`)),
@@ -137,6 +155,10 @@ export function settingsPage(root) {
           cookiePick),
         h('div.card', h('div.kv', h('span', 'Друзья могут добавлять музыку'), sw),
           h('div.hint', 'Фильмы всегда добавляешь только ты. Музыку друзья смогут загружать файлами и по ссылке, если включено.')),
+        h('div.card',
+          h('div.kv', h('span', 'Дополнительные версии видео по умолчанию')),
+          h('div.row.wrap', variantHeights.map((q) => h('label.row.small', { style: { gap: '6px', cursor: 'pointer' } }, variants.get(q), h('span', `${q}p`)))),
+          h('div.hint', 'Исходник всегда сохраняется. Эти отметки задают меньшие версии по умолчанию; при скачивании отдельного видео их можно изменить. Для неподдерживаемого браузером кодека совместимая версия того же размера создаётся автоматически.')),
       );
     };
     get('/api/system').then(draw).catch((e) => box.replaceChildren(alertBox(e.message)));

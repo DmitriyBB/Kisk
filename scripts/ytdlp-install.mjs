@@ -33,7 +33,7 @@ async function download(url) {
   let last;
   for (let attempt = 1; attempt <= 3; attempt++) { // сеть иногда моргает — пробуем до трёх раз
     try {
-      const res = await fetch(url, { redirect: 'follow', headers: { 'user-agent': 'lozha-setup' }, signal: AbortSignal.timeout(300000) });
+      const res = await fetch(url, { redirect: 'follow', headers: { 'user-agent': 'kisk-setup' }, signal: AbortSignal.timeout(300000) });
       if (!res.ok) throw new Error(`HTTP ${res.status} для ${url}`);
       return Buffer.from(await res.arrayBuffer());
     } catch (e) {
@@ -46,7 +46,7 @@ async function download(url) {
 
 // Номер последнего выпуска — из адреса, на который перенаправляет GitHub (без API и его лимитов).
 export async function latestTag() {
-  const res = await fetch(BASE, { redirect: 'manual', headers: { 'user-agent': 'lozha-setup' }, signal: AbortSignal.timeout(20000) });
+  const res = await fetch(BASE, { redirect: 'manual', headers: { 'user-agent': 'kisk-setup' }, signal: AbortSignal.timeout(20000) });
   const loc = res.headers.get('location') || '';
   const m = /\/releases\/tag\/([^/?#]+)/.exec(loc);
   if (!m) throw new Error('не удалось узнать последнюю версию yt-dlp');

@@ -8,11 +8,11 @@ import { fileURLToPath } from 'node:url';
 import { installYtdlp, ytdlpTarget } from './ytdlp-install.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const BIN = path.resolve(process.env.LOZHA_BIN || path.join(ROOT, 'bin'));
+const BIN = path.resolve(process.env.KISK_BIN || process.env.LOZHA_BIN || path.join(ROOT, 'bin'));
 const quiet = process.argv.includes('--quiet');
 const force = process.argv.includes('--force');
 const isWin = process.platform === 'win32';
-const say = (...a) => console.log('[ложа]', ...a);
+const say = (...a) => console.log('[Kisk]', ...a);
 
 function inPath(name) {
   const exe = isWin ? `${name}.exe` : name;

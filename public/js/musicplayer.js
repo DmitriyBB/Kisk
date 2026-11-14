@@ -52,7 +52,7 @@ export const music = {
   setMeta(t) {
     if (!('mediaSession' in navigator) || !window.MediaMetadata) return;
     try {
-      navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist || 'Ложа', artwork: t.poster ? [{ src: t.poster, sizes: '800x800', type: 'image/jpeg' }] : [] });
+      navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist || 'Kisk', artwork: t.poster ? [{ src: t.poster, sizes: '800x800', type: 'image/jpeg' }] : [] });
       const ms = navigator.mediaSession;
       ms.setActionHandler('play', () => this.session?.control('play'));
       ms.setActionHandler('pause', () => this.session?.control('pause'));

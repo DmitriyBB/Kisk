@@ -1,8 +1,12 @@
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
+import fs from 'node:fs';
 import { DATA } from './config.js';
 
-export const db = new DatabaseSync(path.join(DATA, 'lozha.db'));
+const currentDb = path.join(DATA, 'kisk.db');
+const legacyDb = path.join(DATA, 'lozha.db');
+// Existing installations keep using their database (and WAL files); new installations start with kisk.db.
+export const db = new DatabaseSync(fs.existsSync(currentDb) || !fs.existsSync(legacyDb) ? currentDb : legacyDb);
 
 db.exec(`
 PRAGMA journal_mode = WAL;

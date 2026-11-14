@@ -1,4 +1,4 @@
-# Пример nginx для Ложи: замени example.com на свой домен и положи в /etc/nginx/sites-available/lozha.
+# Пример nginx для Kisk: замени example.com на свой домен и положи в /etc/nginx/sites-available/kisk.
 # Node (127.0.0.1:3000) проверяет вход и доступ, сами файлы отдаёт nginx через X-Accel-Redirect.
 # Сертификат: sudo certbot certonly --webroot -w /var/www/letsencrypt -d example.com
 
@@ -28,10 +28,10 @@ server {
     add_header Strict-Transport-Security "max-age=31536000" always;
 
     # Ограничение частоты запросов (зоны объявляются в http {} в nginx.conf):
-    #   limit_req_zone $binary_remote_addr zone=lozha_req:10m rate=30r/s;
-    #   limit_conn_zone $binary_remote_addr zone=lozha_conn:10m;
-    # limit_req  zone=lozha_req burst=200 nodelay;
-    # limit_conn lozha_conn 60;
+    #   limit_req_zone $binary_remote_addr zone=kisk_req:10m rate=30r/s;
+    #   limit_conn_zone $binary_remote_addr zone=kisk_conn:10m;
+    # limit_req  zone=kisk_req burst=200 nodelay;
+    # limit_conn kisk_conn 60;
 
     # Загрузка идёт кусками по 8 МБ
     client_max_body_size 9m;
@@ -44,7 +44,7 @@ server {
     # Видео, музыка, постеры, субтитры: только после проверки доступа в Node (internal)
     location /_media/ {
         internal;
-        alias /var/lib/lozha/media/;
+        alias /var/lib/kisk/media/;
         sendfile on;
         tcp_nopush on;
         sendfile_max_chunk 2m;

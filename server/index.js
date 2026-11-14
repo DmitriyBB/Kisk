@@ -1,4 +1,4 @@
-// Ложа — свой маленький кинозал. Точка входа.
+// Kisk — свой маленький кинозал. Точка входа.
 import http from 'node:http';
 import https from 'node:https';
 import { PORT, HTTPS_PORT, USE_HTTPS, APP_NAME, HOST, TRUST_PROXY, lanAddresses, DEV_TOKEN } from './config.js';
@@ -76,7 +76,7 @@ async function main() {
   console.log('');
   log(`ffmpeg: ${tools.ffmpeg}`);
   log(tools.ytdlp ? `yt-dlp ${tools.ytdlpVersion}: ${tools.ytdlp}` : 'yt-dlp не найден — загрузка по ссылке отключена');
-  if (DEV_TOKEN) log('включён режим автопроверки (LOZHA_DEV_TOKEN)');
+  if (DEV_TOKEN) log('включён режим автопроверки (KISK_DEV_TOKEN)');
 
   // yt-dlp всегда свежий: проверяем при старте и потом раз в несколько часов.
   refreshYtdlp({ force: true }).catch(() => {});

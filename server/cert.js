@@ -42,7 +42,7 @@ const utc = (d) => {
   return tlv(0x17, Buffer.from(`${p(d.getUTCFullYear() % 100)}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}Z`, 'ascii'));
 };
 const ctx = (n, ...c) => tlv(0xa0 | n, ...c);
-const dn = (cn) => seq(set(seq(oid('2.5.4.10'), utf8('Lozha'))), set(seq(oid('2.5.4.3'), utf8(cn))));
+const dn = (cn) => seq(set(seq(oid('2.5.4.10'), utf8('Kisk'))), set(seq(oid('2.5.4.3'), utf8(cn))));
 const ext = (id, critical, value) => seq(oid(id), ...(critical ? [bool(true)] : []), octet(value));
 const ALG = seq(oid('1.2.840.10045.4.3.2')); // ecdsa-with-SHA256
 
@@ -101,7 +101,7 @@ export function ensureCert() {
     const pair = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
     caKey = pair.privateKey;
     caCert = makeCert({
-      subject: 'Lozha Local CA', issuer: 'Lozha Local CA', publicKey: pair.publicKey, signKey: caKey, days: 3650,
+      subject: 'Kisk Local CA', issuer: 'Kisk Local CA', publicKey: pair.publicKey, signKey: caKey, days: 3650,
       extensions: [
         ext('2.5.29.19', true, seq(bool(true), int([0]))),
         ext('2.5.29.15', true, bitstr(Buffer.from([0x86]), 1)),
@@ -116,7 +116,7 @@ export function ensureCert() {
   const leaf = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
   const san = seq(...names.map((n) => tlv(0x82, Buffer.from(n, 'ascii'))), ...ips.map((ip) => tlv(0x87, ipBytes(ip))));
   const leafCert = makeCert({
-    subject: 'Lozha', issuer: 'Lozha Local CA', publicKey: leaf.publicKey, signKey: caKey, days: 397,
+    subject: 'Kisk', issuer: 'Kisk Local CA', publicKey: leaf.publicKey, signKey: caKey, days: 397,
     extensions: [
       ext('2.5.29.19', true, seq()),
       ext('2.5.29.15', true, bitstr(Buffer.from([0x80]), 7)),

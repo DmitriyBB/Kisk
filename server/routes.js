@@ -14,6 +14,7 @@ import { enqueueDownload, enqueueIngest, cancelAndRemove, retry } from './queue.
 import * as uploads from './uploads.js';
 import { openRoom, roomsSummary, onMediaRemoved, roomFor } from './rooms.js';
 import { tools, refreshYtdlp } from './tools.js';
+import { LADDER } from './media.js';
 
 const isOwner = (u) => u.role === 'owner';
 const canAddMusic = (u) => isOwner(u) || getSetting('friendsMusic', true) !== false;
@@ -33,6 +34,7 @@ export function registerRoutes() {
       ytdlp: !!tools.ytdlp,
       secure: auth.isSecure(req),
       warnPass: !!user && isOwner(user) && getSetting('ownerDefaultPass', false) === true,
+      variantHeights: getSetting('variantHeights', LADDER),
       now: Date.now(),
     });
   }, { auth: false });
@@ -219,7 +221,7 @@ export function registerRoutes() {
     disk: { free: await freeBytes(DATA), used: await dirSize(DIRS.media) },
     ytdlp: { found: !!tools.ytdlp, version: tools.ytdlpVersion, note: tools.lastNote, checkedAt: tools.lastCheck, updating: !!tools.updating },
     cookies: cookiesInfo(),
-    settings: { friendsMusic: getSetting('friendsMusic', true) !== false },
+    settings: { friendsMusic: getSetting('friendsMusic', true) !== false, variantHeights: getSetting('variantHeights', LADDER) },
   });
 
   route('GET', '/api/system', async ({ res }) => sendJson(res, 200, await systemInfo()), { auth: 'owner' });
@@ -247,6 +249,10 @@ export function registerRoutes() {
   route('POST', '/api/system/settings', async ({ req, res }) => {
     const body = await readJson(req);
     if (typeof body.friendsMusic === 'boolean') setSetting('friendsMusic', body.friendsMusic);
+    if (Array.isArray(body.variantHeights)) {
+      const allowed = new Set(LADDER);
+      setSetting('variantHeights', [...new Set(body.variantHeights.map(Number).filter((x) => allowed.has(x)))]);
+    }
     hub.broadcast({ t: 'perms' });
     sendJson(res, 200, await systemInfo());
   }, { auth: 'owner' });
@@ -299,7 +305,7 @@ export function registerRoutes() {
     const body = await readJson(req);
     const kind = body.kind === 'audio' ? 'audio' : 'video';
     if (!canAdd(user, kind)) throw bad('Недостаточно прав', 403);
-    const { title, job } = jobFromResolved(String(body.id || ''), { height: body.height, kind });
+    const { title, job } = jobFromResolved(String(body.id || ''), { height: body.height, kind, variantHeights: body.variantHeights });
     const mediaId = createMedia({ kind, title, status: 'queued', stage: 'В очереди', origin: 'link', job, addedBy: user.id });
     enqueueDownload(mediaId);
     sendJson(res, 200, { mediaId });
@@ -368,7 +374,7 @@ export function registerRoutes() {
     await sendFile(req, res, path.join(DIRS.certs, 'ca.crt'), { type: 'application/x-x509-ca-cert' });
   }, { auth: false });
 
-  // ── Только для автопроверки (включается переменной LOZHA_DEV_TOKEN) ─────
+  // ── Только для автопроверки (включается переменной KISK_DEV_TOKEN) ─────
   if (DEV_TOKEN) {
     const same = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
     route('GET', '/dev/login', async ({ req, res, url }) => {

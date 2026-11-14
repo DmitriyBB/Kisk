@@ -1,4 +1,4 @@
-/* Ложа — монохромная дизайн-система. Своя сетка, своя типографика, без чужих библиотек. */
+/* Kisk — монохромная дизайн-система. Своя сетка, своя типографика, без чужих библиотек. */
 
 :root {
   color-scheme: dark;
@@ -216,6 +216,24 @@ textarea.input { height: auto; padding: 14px 18px; resize: vertical; min-height:
   -webkit-backdrop-filter: blur(26px) saturate(1.25);
   backdrop-filter: blur(26px) saturate(1.25);
   box-shadow: inset 0 0 0 1px var(--line), var(--shadow-s);
+}
+html[data-glass='off'] {
+  --glass: var(--bg-3);
+  --glass-strong: var(--bg-2);
+}
+html[data-glass='off'] .glass,
+html[data-glass='off'] .sheet-wrap,
+html[data-glass='off'] .menu {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-motion='off'] *,
+html[data-motion='off'] *::before,
+html[data-motion='off'] *::after {
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
+  scroll-behavior: auto !important;
 }
 .panel { background: var(--surface); border-radius: var(--r-l); padding: 20px; }
 .chip {

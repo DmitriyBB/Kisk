@@ -1,23 +1,23 @@
-# systemd-сервис Ложи: /etc/systemd/system/lozha.service
-# Пользователь lozha, код в /var/www/lozha, данные в /var/lib/lozha (см. README, «Свой сервер»).
+# systemd-сервис Kisk: /etc/systemd/system/kisk.service
+# Пользователь kisk, код в /var/www/kisk, данные в /var/lib/kisk (см. README, «Свой сервер»).
 [Unit]
-Description=Ложа — кинозал и музыка вместе с друзьями
+Description=Kisk — кинозал и музыка вместе с друзьями
 After=network.target
 
 [Service]
 Type=simple
-User=lozha
-Group=lozha
-WorkingDirectory=/var/www/lozha
+User=kisk
+Group=kisk
+WorkingDirectory=/var/www/kisk
 Environment=NODE_ENV=production
 Environment=PORT=3000
 Environment=HOST=127.0.0.1
-Environment=LOZHA_DATA=/var/lib/lozha
-Environment=LOZHA_BIN=/var/lib/lozha/bin
-Environment=LOZHA_TRUST_PROXY=1
-Environment=LOZHA_ACCEL=/_media/
-Environment=HOME=/var/lib/lozha
-Environment=XDG_CACHE_HOME=/var/lib/lozha/cache
+Environment=KISK_DATA=/var/lib/kisk
+Environment=KISK_BIN=/var/lib/kisk/bin
+Environment=KISK_TRUST_PROXY=1
+Environment=KISK_ACCEL=/_media/
+Environment=HOME=/var/lib/kisk
+Environment=XDG_CACHE_HOME=/var/lib/kisk/cache
 ExecStart=/usr/bin/node --experimental-sqlite --disable-warning=ExperimentalWarning server/index.js
 Restart=always
 RestartSec=3
@@ -30,7 +30,7 @@ Nice=5
 # Песочница: процесс может писать только в свою папку с данными
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadWritePaths=/var/lib/lozha
+ReadWritePaths=/var/lib/kisk
 ProtectHome=true
 PrivateTmp=true
 PrivateDevices=true

@@ -27,7 +27,8 @@ export const tools = {
 function candidates(name) {
   const exe = isWin ? `${name}.exe` : name;
   const list = [];
-  const env = process.env[`LOZHA_${name.replace(/-/g, '').toUpperCase()}`];
+  const suffix = name.replace(/-/g, '').toUpperCase();
+  const env = process.env[`KISK_${suffix}`] || process.env[`LOZHA_${suffix}`];
   if (env) list.push(env);
   if (name === 'yt-dlp') list.push(ytdlpTarget(BIN).exe); // своя сборка из ./bin (на macOS — распакованная)
   list.push(path.join(BIN, exe));

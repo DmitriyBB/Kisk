@@ -3,6 +3,7 @@ import { h, clamp, fmtTime, isSafari, isIOS } from './util.js';
 import { icon } from './icons.js';
 import { rt, bus, store } from './api.js';
 import { seg, avatar, range } from './ui.js';
+import { getPreference } from './preferences.js';
 
 export const REACTIONS = ['😂', '❤️', '👍', '😮', '😢', '🔥', '👏', '🎉'];
 
@@ -14,9 +15,10 @@ export const REACTIONS = ['😂', '❤️', '👍', '😮', '😢', '🔥', '�
 // Safari и любой браузер на iPhone (движок WebKit) на каждую смену скорости замирают на ~0,5 с —
 // там скорость не трогаем вовсе, только редкая перемотка с поправкой на её длительность.
 const WEBKIT = isSafari || isIOS;
-const SYNC = WEBKIT
+const OPTIMIZED_SYNC = WEBKIT
   ? { calm: 0.4, jump: 1.2, useRate: false, seekGap: 8000, seekLag: 0.35 }
   : { calm: 0.15, stop: 0.04, jump: 1.2, useRate: true, maxRate: 0.08, rateStep: 0.02, rateHold: 800, seekGap: 2500, seekLag: 0.06 };
+const STANDARD_SYNC = { calm: 0.045, stop: 0.015, jump: 1.2, useRate: true, maxRate: 0.12, rateStep: 0.02, rateHold: 200, seekGap: 2500, seekLag: 0.06 };
 export class RoomSession {
   constructor(roomId, hooks) {
     this.room = roomId;
@@ -28,7 +30,8 @@ export class RoomSession {
     this.smooth = null; // сглаженное расхождение
     this.fix = 0; // куда сейчас подтягиваем скоростью: -1, 0, 1
     this.lastRate = 0;
-    this.seekLag = SYNC.seekLag; // сколько секунд реально занимает перемотка на этом устройстве
+    this.syncMode = getPreference('optimizedSync');
+    this.seekLag = (this.syncMode ? OPTIMIZED_SYNC : STANDARD_SYNC).seekLag; // сколько секунд реально занимает перемотка на этом устройстве
     this.seekPending = 0; // когда началась наша перемотка (performance.now), 0 — нет
     this.syncSeekAt = -1e9; // когда последний раз сами перематывали ради синхронизации
     this.localUntil = 0;
@@ -121,6 +124,10 @@ export class RoomSession {
     if (!s || !el || !this.joined || !s.mediaId) return;
     if (!Number.isFinite(el.duration) || !el.duration || el.readyState < 1) return this.report(false, el, false);
     const switching = !!this.h.isSwitching?.();
+    const optimized = getPreference('optimizedSync');
+    const sync = optimized ? OPTIMIZED_SYNC : STANDARD_SYNC;
+    const syncChanged = optimized !== this.syncMode;
+    if (syncChanged) { this.seekLag = sync.seekLag; this.fix = 0; this.smooth = null; }
     const now = performance.now();
     const want = s.playing && !s.waiting;
     const t = clamp(this.target(), 0, Math.max(0, el.duration - 0.05));
@@ -138,6 +145,7 @@ export class RoomSession {
         el.playbackRate = r;
         this.lastRate = now;
       };
+      if (syncChanged) { this.syncMode = optimized; rate(s.rate); }
       const seek = (to, gap = 2500) => {
         if (now - this.lastSeek < gap && this.seekSeq === s.seq) return false; // не гоняемся за буферизацией
         this.lastSeek = now;
@@ -158,18 +166,18 @@ export class RoomSession {
             this.smooth = null;
             this.fix = 0;
           };
-          if (Math.abs(diff) > SYNC.jump) { rate(s.rate); syncSeek(2500); } // большое расхождение — сразу перемоткой
-          else if (!SYNC.useRate) { // WebKit: скорость не трогаем, заметное расхождение — редкой перемоткой
+          if (Math.abs(diff) > sync.jump) { rate(s.rate); syncSeek(2500); } // большое расхождение — сразу перемоткой
+          else if (!sync.useRate) { // WebKit: скорость не трогаем, заметное расхождение — редкой перемоткой
             rate(s.rate);
-            if (Math.abs(d) > SYNC.calm) syncSeek(SYNC.seekGap);
+            if (Math.abs(d) > sync.calm) syncSeek(sync.seekGap);
           } else {
             // Гистерезис: начинаем подтягивать за зоной покоя и тянем почти до нуля, а не дёргаемся на границе.
-            if (!this.fix && Math.abs(d) > SYNC.calm) this.fix = Math.sign(d);
-            else if (this.fix && (Math.abs(d) < SYNC.stop || Math.sign(d) !== this.fix)) this.fix = 0;
+            if (!this.fix && Math.abs(d) > sync.calm) this.fix = Math.sign(d);
+            else if (this.fix && (Math.abs(d) < sync.stop || Math.sign(d) !== this.fix)) this.fix = 0;
             if (!this.fix) rate(s.rate);
-            else if (now - this.lastRate >= SYNC.rateHold) {
-              const k = Math.round(clamp(d * 0.5, -SYNC.maxRate, SYNC.maxRate) / SYNC.rateStep) * SYNC.rateStep;
-              rate(s.rate * (1 + (k || this.fix * SYNC.rateStep)));
+            else if (now - this.lastRate >= sync.rateHold) {
+              const k = Math.round(clamp(d * 0.5, -sync.maxRate, sync.maxRate) / sync.rateStep) * sync.rateStep;
+              rate(s.rate * (1 + (k || this.fix * sync.rateStep)));
             }
           }
         }

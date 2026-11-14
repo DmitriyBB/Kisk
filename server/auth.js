@@ -70,12 +70,15 @@ export const isSecure = (req) => !!req.socket.encrypted
   || (TRUST_PROXY && String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https');
 
 // У http и https разные имена, чтобы вкладки на двух портах не мешали друг другу.
-export const cookieName = (req) => (isSecure(req) ? 'lozha_s' : 'lozha');
+export const cookieName = (req) => (isSecure(req) ? 'kisk_s' : 'kisk');
 
 export function currentUser(req) {
   if (req._user !== undefined) return req._user;
   let token = null;
-  try { token = parseCookies(req)[cookieName(req)]; } catch {}
+  try {
+    const cookies = parseCookies(req);
+    token = cookies[cookieName(req)] || cookies[isSecure(req) ? 'lozha_s' : 'lozha'];
+  } catch {}
   req._user = userByToken(token);
   return req._user;
 }

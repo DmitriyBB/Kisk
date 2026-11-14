@@ -462,7 +462,7 @@ export async function resolveLink(raw, kind = 'video') {
   }
 }
 
-export function jobFromResolved(id, { height, kind }) {
+export function jobFromResolved(id, { height, kind, variantHeights }) {
   const r = resolved.get(id);
   if (!r || Date.now() - r.at > 3600e3) throw bad('Разбор устарел — вставь ссылку ещё раз');
   const res = r.result;
@@ -474,6 +474,10 @@ export function jobFromResolved(id, { height, kind }) {
     job.height = q?.height || 0;
     job.expect = q?.size || 0;
     job.label = q?.label || '';
+    if (Array.isArray(variantHeights)) {
+      const allowed = new Set([360, 480, 720, 1080, 1440]);
+      job.variantHeights = [...new Set(variantHeights.map(Number).filter((x) => allowed.has(x)))];
+    }
   } else {
     job.expect = res.audioSize || 0;
   }
